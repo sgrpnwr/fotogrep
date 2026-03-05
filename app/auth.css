@@ -125,6 +125,20 @@
   margin: 0;
 }
 
+.field-status {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  margin: 0;
+}
+
+.success-message {
+  font-size: 11px;
+  color: #4caf7a;
+  margin-top: 2px;
+  margin: 0;
+}
+
 .submit-button {
   margin-top: 4px;
   padding: 16px 0;
@@ -174,6 +188,18 @@ input {
   border: none;
   font-size: 14px;
   font-family: inherit;
+}
+
+.select-input {
+  background: transparent;
+  color: inherit;
+  border: none;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.select-input:focus {
+  outline: none;
 }
 
 input::placeholder {

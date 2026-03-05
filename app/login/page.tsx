@@ -6,17 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { Eye, EyeOff } from 'lucide-react';
 import '@/app/auth.css';
 
 // ── Validation schema ────────────────────────────────────────
 const schema = yup.object({
-  email: yup
+  username: yup
     .string()
-    .required('Email is required')
-    .matches(
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      'Enter a valid email with a domain (e.g., user@example.com)'
-    ),
+    .required('Username is required')
+    .min(3, 'Username must be at least 3 characters')
+    .max(20, 'Username must be under 20 characters')
+    .matches(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers and underscores'),
   password: yup
     .string()
     .required('Password is required')
@@ -30,7 +30,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState('');
-  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [focusedField, setFocusedField] = useState<'username' | 'password' | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -80,7 +80,7 @@ function LoginForm() {
       {/* Logo */}
       <div className="auth-header">
         <h1 className="auth-title">fotogrep</h1>
-        <p className="auth-subtitle">welcome back.</p>
+        <p className="auth-subtitle">Sign in to continue to your feed.</p>
       </div>
 
       {/* Success banner */}
@@ -93,19 +93,20 @@ function LoginForm() {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
 
-        {/* Email */}
+        {/* Username */}
         <div 
-          className={`form-field ${focusedField === 'email' ? 'focused' : ''} ${errors.email ? 'error' : ''}`}>
-          <p className="field-label">Email</p>
+          className={`form-field ${focusedField === 'username' ? 'focused' : ''} ${errors.username ? 'error' : ''}`}>
+          <p className="field-label">Username</p>
           <input
-            {...register('email')}
-            type="email"
-            placeholder="you@example.com"
-            onFocus={() => setFocusedField('email')}
+            {...register('username')}
+            type="text"
+            placeholder="yourname"
+            autoComplete="off"
+            onFocus={() => setFocusedField('username')}
             onBlur={() => setFocusedField(null)}
           />
-          {errors.email && (
-            <p className="error-message">{errors.email.message}</p>
+          {errors.username && (
+            <p className="error-message">{errors.username.message}</p>
           )}
         </div>
 
@@ -127,8 +128,9 @@ function LoginForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="password-toggle"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {errors.password && (

@@ -11,19 +11,35 @@ export async function POST(req: NextRequest) {
     await connectDB();
     console.log('inside login route');
 
-    const { email, password } = await req.json();
+    const { username, password } = await req.json();
 
-    if (!email || !password) {
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+    // Basic validation aligned with frontend
+    if (
+      !username ||
+      typeof username !== 'string' ||
+      username.length < 3 ||
+      username.length > 20 ||
+      !usernameRegex.test(username)
+    ) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Username must be 3–20 characters and use only letters, numbers, and underscores' },
+        { status: 400 }
+      );
+    }
+
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters' },
         { status: 400 }
       );
     }
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
     if (!user) {
-      console.log('User not found for email:', email);
+      console.log('User not found for username:', username);
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
