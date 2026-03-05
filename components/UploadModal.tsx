@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { compressImageForApi } from '@/lib/imageUtils';
 
 interface UploadModalProps {
   onClose: () => void;
@@ -92,53 +93,47 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     setErrorMsg('');
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageBase64 = e.target?.result as string;
-        const token = localStorage.getItem('token');
+      const imageBase64 = await compressImageForApi(file);
+      const token = localStorage.getItem('token');
 
         // Generate 3 caption options
-        const queries = [
-          'Generate a single-line caption (max 2 lines if necessary) for this image. Be concise, engaging, and descriptive. Return ONLY the caption text.',
-          'Create a catchy single-line caption for this image. Make it witty and memorable. Return ONLY the caption text.',
-          'Write a descriptive single-line caption for this image that captures the mood. Return ONLY the caption text.',
-        ];
+      const queries = [
+        'Generate a single-line caption (max 2 lines if necessary) for this image. Be concise, engaging, and descriptive. Return ONLY the caption text.',
+        'Create a catchy single-line caption for this image. Make it witty and memorable. Return ONLY the caption text.',
+        'Write a descriptive single-line caption for this image that captures the mood. Return ONLY the caption text.',
+      ];
 
-        const options: string[] = [];
-        for (const query of queries) {
-          try {
-            const res = await fetch('/api/caption', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ imageBase64, customQuery: query }),
-            });
+      const options: string[] = [];
+      for (const query of queries) {
+        try {
+          const res = await fetch('/api/caption', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ imageBase64, customQuery: query }),
+          });
 
-            if (res.ok) {
-              const { caption: generatedCaption } = await res.json();
-              options.push(generatedCaption);
-            }
-          } catch (err) {
-            console.error('Error generating caption option:', err);
+          if (res.ok) {
+            const { caption: generatedCaption } = await res.json();
+            options.push(generatedCaption);
           }
+        } catch (err) {
+          console.error('Error generating caption option:', err);
         }
+      }
 
-        if (options.length > 0) {
-          setCaptionOptions(options);
-          setCaption(options[0]); // Select first option by default
-        } else {
-          setErrorMsg('Failed to generate captions. Please write one manually.');
-        }
-        
-        // Set to false AFTER all captions are generated
-        setIsGeneratingCaption(false);
-      };
-      reader.readAsDataURL(file);
+      if (options.length > 0) {
+        setCaptionOptions(options);
+        setCaption(options[0]);
+      } else {
+        setErrorMsg('Failed to generate captions. Please write one manually.');
+      }
     } catch (err: any) {
-      setErrorMsg('Error processing image');
+      setErrorMsg('Error processing image. Try another photo or write a caption manually.');
       console.error('Error:', err);
+    } finally {
       setIsGeneratingCaption(false);
     }
   }
@@ -153,33 +148,29 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     setErrorMsg('');
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageBase64 = e.target?.result as string;
-        const token = localStorage.getItem('token');
+      const imageBase64 = await compressImageForApi(file);
+      const token = localStorage.getItem('token');
 
-        const res = await fetch('/api/caption', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ imageBase64, customQuery }),
-        });
+      const res = await fetch('/api/caption', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageBase64, customQuery }),
+      });
 
-        if (res.ok) {
-          const { caption: generatedCaption } = await res.json();
-          setCaption(generatedCaption);
-          setShowQueryInput(false);
-          setCustomQuery('');
-        } else {
-          const err = await res.json();
-          setErrorMsg(err.error || 'Failed to generate caption');
-        }
-      };
-      reader.readAsDataURL(file);
+      if (res.ok) {
+        const { caption: generatedCaption } = await res.json();
+        setCaption(generatedCaption);
+        setShowQueryInput(false);
+        setCustomQuery('');
+      } else {
+        const err = await res.json();
+        setErrorMsg(err.error || 'Failed to generate caption');
+      }
     } catch (err: any) {
-      setErrorMsg('Error processing image');
+      setErrorMsg('Error processing image. Try another photo or write a caption manually.');
       console.error('Error:', err);
     } finally {
       setIsGeneratingCaption(false);
