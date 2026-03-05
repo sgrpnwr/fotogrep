@@ -6,7 +6,10 @@ import User from '@/lib/models/User';
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('inside login route');
+
     await connectDB();
+    console.log('inside login route');
 
     const { email, password } = await req.json();
 
@@ -20,6 +23,7 @@ export async function POST(req: NextRequest) {
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('User not found for email:', email);
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }

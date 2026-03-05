@@ -3,14 +3,43 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import '@/app/auth.css';
+
+// ── Validation schema ────────────────────────────────────────
+const schema = yup.object({
+  email: yup
+    .string()
+    .required('Email is required')
+    .matches(
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      'Enter a valid email with a domain (e.g., user@example.com)'
+    ),
+  password: yup
+    .string()
+    .required('Password is required')
+    .min(6, 'Password must be at least 6 characters'),
+});
+
+type LoginForm = yup.InferType<typeof schema>;
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginForm>({
+    resolver: yupResolver(schema),
+  });
 
   useEffect(() => {
     if (searchParams.get('signup') === 'success') {
@@ -18,198 +47,117 @@ function LoginForm() {
     }
   }, [searchParams]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError('');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const onSubmit = async (data: LoginForm) => {
+    setServerError('');
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(data),
       });
 
-      const data = await res.json();
+      const json = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Something went wrong');
+        setServerError(json.error || 'Something went wrong');
         return;
       }
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', json.token);
+      localStorage.setItem('user', JSON.stringify(json.user));
 
       router.push('/');
 
     } catch {
-      setError('Something went wrong. Try again.');
-    } finally {
-      setLoading(false);
+      setServerError('Something went wrong. Try again.');
     }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      padding: '0 24px',
-      background: 'var(--bg)',
-    }}>
+    <div className="auth-container">
 
       {/* Logo */}
-      <div style={{ marginBottom: 48 }}>
-        <h1 style={{
-          fontSize: 32,
-          fontWeight: 300,
-          letterSpacing: 6,
-          color: 'var(--accent)',
-          textTransform: 'lowercase',
-        }}>
-          fotogrep
-        </h1>
-        <p style={{
-          color: 'var(--muted)',
-          fontSize: 13,
-          marginTop: 8,
-          letterSpacing: 1,
-        }}>
-          welcome back.
-        </p>
+      <div className="auth-header">
+        <h1 className="auth-title">fotogrep</h1>
+        <p className="auth-subtitle">welcome back.</p>
       </div>
 
-      {/* Success message */}
+      {/* Success banner */}
       {success && (
-        <div style={{
-          padding: '12px 16px',
-          background: '#0F2A1A',
-          border: '1px solid #1A4A2A',
-          borderRadius: 8,
-          marginBottom: 16,
-        }}>
-          <p style={{
-            color: '#4CAF7A',
-            fontSize: 13,
-          }}>{success}</p>
+        <div className="success-banner">
+          <p>{success}</p>
         </div>
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-      }}>
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
 
         {/* Email */}
-        <div style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-        }}>
-          <p style={{
-            fontSize: 10,
-            color: 'var(--muted)',
-            letterSpacing: 2,
-            textTransform: 'uppercase',
-          }}>Email</p>
+        <div 
+          className={`form-field ${focusedField === 'email' ? 'focused' : ''} ${errors.email ? 'error' : ''}`}>
+          <p className="field-label">Email</p>
           <input
-            name="email"
+            {...register('email')}
             type="email"
-            value={form.email}
-            onChange={handleChange}
             placeholder="you@example.com"
+            onFocus={() => setFocusedField('email')}
+            onBlur={() => setFocusedField(null)}
           />
+          {errors.email && (
+            <p className="error-message">{errors.email.message}</p>
+          )}
         </div>
 
         {/* Password */}
-        <div style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          marginBottom: 8,
-        }}>
-          <p style={{
-            fontSize: 10,
-            color: 'var(--muted)',
-            letterSpacing: 2,
-            textTransform: 'uppercase',
-          }}>Password</p>
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="your password"
-          />
+        <div 
+          className={`form-field ${focusedField === 'password' ? 'focused' : ''} ${errors.password ? 'error' : ''}`}
+          style={{ marginBottom: 8 }}>
+          <p className="field-label">Password</p>
+          <div className="password-wrapper">
+            <input
+              {...register('password')}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="your password"
+              onFocus={() => setFocusedField('password')}
+              onBlur={() => setFocusedField(null)}
+              className="password-input"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="password-toggle"
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="error-message">{errors.password.message}</p>
+          )}
         </div>
 
-        {/* Error */}
-        {error && (
-          <p style={{
-            color: 'var(--error)',
-            fontSize: 13,
-            letterSpacing: 0.5,
-            padding: '0 4px',
-          }}>
-            {error}
+        {/* Server error */}
+        {serverError && (
+          <p style={{ color: 'var(--error)', fontSize: 13, padding: '0 4px' }}>
+            {serverError}
           </p>
         )}
 
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading}
-          style={{
-            marginTop: 4,
-            padding: '16px 0',
-            background: loading ? 'var(--surface)' : 'var(--accent)',
-            color: loading ? 'var(--muted)' : '#0A0A0A',
-            border: loading ? '1px solid var(--border)' : 'none',
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: 3,
-            textTransform: 'uppercase',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
-          }}
+          disabled={isSubmitting}
+          className="submit-button"
         >
-          {loading ? 'signing in...' : 'sign in'}
+          {isSubmitting ? 'signing in...' : 'sign in'}
         </button>
 
       </form>
 
       {/* Signup link */}
-      <p style={{
-        marginTop: 32,
-        color: 'var(--muted)',
-        fontSize: 13,
-        textAlign: 'center',
-        letterSpacing: 0.3,
-      }}>
+      <p className="auth-footer">
         new to fotogrep?{' '}
-        <Link href="/signup" style={{
-          color: 'var(--accent)',
-          letterSpacing: 0.5,
-        }}>
-          create account
-        </Link>
+        <Link href="/signup">create account</Link>
       </p>
 
     </div>

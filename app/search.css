@@ -1,0 +1,135 @@
+/* ── Search Page Styles ────────────────────────────────────────── */
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.search-main {
+  flex: 1;
+  padding: 24px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  max-width: 600px;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 16px;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200, 168, 130, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.results-count {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 12px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  opacity: 0.5;
+}
+
+.empty-message {
+  color: var(--muted);
+  font-size: 16px;
+  text-align: center;
+}
+
+/* ── Mobile Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .search-main {
+    padding: 16px 12px;
+    padding-bottom: 80px;
+  }
+
+  .search-header {
+    margin-bottom: 24px;
+  }
+
+  .search-input {
+    font-size: 14px;
+    padding: 12px 14px 12px 40px;
+  }
+
+  .search-input-wrapper .search-icon {
+    left: 12px;
+    font-size: 16px;
+  }
+}
